@@ -1,0 +1,22 @@
+# Generated READMEs (not versioned)
+README.md
+**/README.md
+HELP.md
+**/HELP.md
+
+# Maven
+target/
+**/target/
+!.mvn/wrapper/maven-wrapper.jar
+
+# IDE
+.idea/
+*.iml
+.vscode/
+.classpath
+.project
+.settings/
+
+# System
+.DS_Store
+*.log
