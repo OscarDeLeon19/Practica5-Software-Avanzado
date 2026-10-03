@@ -1,0 +1,77 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name: order-service
+  datasource:
+    url: jdbc:h2:mem:orderdb;DB_CLOSE_DELAY=-1
+    username: sa
+    password:
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    open-in-view: false
+  h2:
+    console:
+      enabled: true
+
+services:
+  payment:
+    url: ${PAYMENT_URL:http://localhost:8082}
+  inventory:
+    url: ${INVENTORY_URL:http://localhost:8083}
+  shipping:
+    url: ${SHIPPING_URL:http://localhost:8084}
+
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        failureRateThreshold: 50
+        waitDurationInOpenState: 10s
+        slidingWindowSize: 10
+        permittedNumberOfCallsInHalfOpenState: 3
+        slidingWindowType: COUNT_BASED
+        minimumNumberOfCalls: 10
+        slowCallRateThreshold: 50
+        slowCallDurationThreshold: 2s
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+        registerHealthIndicator: true
+        recordExceptions:
+          - com.poc.practica5.order.exception.RemoteServiceException
+        ignoreExceptions:
+          - com.poc.practica5.order.exception.BusinessException
+    instances:
+      paymentCB:
+        baseConfig: default
+      inventoryCB:
+        baseConfig: default
+      shippingCB:
+        baseConfig: default
+  retry:
+    instances:
+      compensation:
+        maxAttempts: 3
+        waitDuration: 1s
+        retryExceptions:
+          - com.poc.practica5.order.exception.RemoteServiceException
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,circuitbreakers,circuitbreakerevents
+  endpoint:
+    health:
+      show-details: always
+  health:
+    circuitbreakers:
+      enabled: true
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    tags-sorter: alpha
