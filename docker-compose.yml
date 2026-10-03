@@ -1,0 +1,73 @@
+name: practica5
+
+x-healthcheck: &healthcheck
+  interval: 5s
+  timeout: 3s
+  retries: 20
+  start_period: 20s
+
+services:
+  payment-service:
+    build: ./payment-service
+    container_name: payment-service
+    ports:
+      - "8082:8082"
+    environment:
+      CHAOS_MODE: OK
+    networks:
+      - practica5-net
+    healthcheck:
+      test: ["CMD", "curl", "-fs", "http://localhost:8082/actuator/health"]
+      <<: *healthcheck
+
+  inventory-service:
+    build: ./inventory-service
+    container_name: inventory-service
+    ports:
+      - "8083:8083"
+    environment:
+      CHAOS_MODE: OK
+    networks:
+      - practica5-net
+    healthcheck:
+      test: ["CMD", "curl", "-fs", "http://localhost:8083/actuator/health"]
+      <<: *healthcheck
+
+  shipping-service:
+    build: ./shipping-service
+    container_name: shipping-service
+    ports:
+      - "8084:8084"
+    environment:
+      CHAOS_MODE: OK
+    networks:
+      - practica5-net
+    healthcheck:
+      test: ["CMD", "curl", "-fs", "http://localhost:8084/actuator/health"]
+      <<: *healthcheck
+
+  order-service:
+    build: ./order-service
+    container_name: order-service
+    ports:
+      - "8081:8081"
+    environment:
+      PAYMENT_URL: http://payment-service:8082
+      INVENTORY_URL: http://inventory-service:8083
+      SHIPPING_URL: http://shipping-service:8084
+    networks:
+      - practica5-net
+    depends_on:
+      payment-service:
+        condition: service_healthy
+      inventory-service:
+        condition: service_healthy
+      shipping-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-fs", "http://localhost:8081/actuator/health"]
+      <<: *healthcheck
+
+networks:
+  practica5-net:
+    driver: bridge
